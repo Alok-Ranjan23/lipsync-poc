@@ -1,0 +1,14 @@
+# Local CPU Wav2Lip-ONNX POC dependencies (no GPU, no torch).
+# Tested on Python 3.12, Linux (WSL2), CPU-only.
+numpy==2.4.6
+scipy==1.18.0
+onnxruntime==1.27.0
+opencv-python-headless==5.0.0.93
+librosa==0.11.0
+soundfile==0.14.0
+imageio-ffmpeg==0.6.0
+huggingface-hub==1.22.0
+tqdm==4.68.4
+
+# Optional: offline TTS to generate a demo audio clip.
+piper-tts==1.4.2

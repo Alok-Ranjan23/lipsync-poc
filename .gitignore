@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+
+# Large downloaded model weights (fetch via download_models.py)
+models/
+!models/.gitkeep
+
+# Generated media
+outputs/*.mp4
+outputs/*.png
+
+# MuseTalk: keep only our setup.sh/run.sh. The MuseTalk/ folder is a full
+# third-party clone (has its own .git, GBs of weights) recreated by setup.sh.
+musetalk/.venv/
+musetalk/MuseTalk/
