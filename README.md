@@ -331,6 +331,10 @@ there's an optional "photo → static video" cell, but for true photo-to-talking
 ```
 lipsync-poc/
 ├── README.md
+├── doc/                architecture + flow write-ups per model
+│   ├── wav2lip_arch.md
+│   ├── musetalk_arch.md
+│   └── latentsync_arch.md
 ├── requirements.txt
 ├── assets/            sample_face.png, sample_audio.wav
 ├── models/            downloaded ONNX weights (gitignored)
