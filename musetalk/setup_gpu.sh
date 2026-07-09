@@ -37,14 +37,18 @@ uv pip install "numpy<2" diffusers==0.30.2 accelerate transformers==4.39.2 \
   "huggingface_hub<1.0" librosa einops omegaconf ffmpeg-python moviepy soundfile \
   opencv-python==4.9.0.80 requests imageio imageio-ffmpeg gdown pip "setuptools==69.5.1" wheel
 
-echo "==> [5/6] mmlab (mmcv builds from source on Blackwell/cu128 - needs nvcc)"
-uv pip install -U openmim
+echo "==> [5/6] mmlab (mmcv builds from source on Blackwell/cu128)"
+uv pip install -U openmim ninja
+uv pip install mmengine
 uv pip install chumpy==0.70 --no-build-isolation || true
-mim install mmengine "mmcv>=2.1.0,<2.2.0" "mmdet==3.2.0" "mmpose==1.3.1" || {
-  echo "!! mmcv/mmpose install FAILED (likely no CUDA toolkit/nvcc for the cu128 source build)."
-  echo "   Fall back to CPU:  bash setup.sh   (then bash run.sh)  -- or use ../latentsync on the GPU."
+# --no-build-isolation so mmcv's setup.py uses our setuptools 69.5.1 (has pkg_resources).
+# The compile step needs the CUDA toolkit (nvcc); if absent it fails here.
+uv pip install "mmcv==2.1.0" --no-build-isolation || {
+  echo "!! mmcv build FAILED. If it's a compiler/nvcc error, the box lacks the CUDA toolkit"
+  echo "   needed to compile mmcv's CUDA ops. Fall back to CPU:  bash setup.sh"
   exit 1
 }
+uv pip install "mmdet==3.2.0" "mmpose==1.3.1" --no-build-isolation
 
 echo "==> [6/6] download weights (~4 GB) + prepare POC inputs"
 python - <<'PY'
