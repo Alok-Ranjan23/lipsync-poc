@@ -14,12 +14,10 @@ Three runnable paths:
    result we can produce locally**. Verified running on **CPU** here (~14 min for a 6 s clip);
    the *same code* uses a **GPU** automatically if you install a CUDA build of PyTorch (then it's
    real-time). See §3c.
-3. **`colab_gpu/`** — ready-to-run **Google Colab (GPU)** notebooks for **all three** models,
-   so they can be run at GPU speed regardless of local hardware:
-   - `wav2lip_gpu_poc.ipynb` — Wav2Lip on GPU (plain + GPEN-enhanced)
-   - `musetalk_gpu_poc.ipynb` — MuseTalk on GPU (near real-time)
-   - `latentsync_gpu_poc.ipynb` — **LatentSync 1.6**, the highest-quality diffusion model
-     (multi-step, really wants a GPU).
+3. **`latentsync/`** — GPU runner for **LatentSync 1.6**, the highest-quality diffusion model
+   (multi-step, needs a real NVIDIA GPU). Run it on an SSH GPU box — see **§4**.
+
+To run any of these on a GPU box over SSH (setup + run scripts), see **§4**.
 
 **CPU vs GPU at a glance:**
 
@@ -27,9 +25,7 @@ Three runnable paths:
 |---|---|---|---|
 | `wav2lip` | ✅ | ✅ | None — auto-detects; just add `onnxruntime-gpu` |
 | `musetalk` | ✅ | ✅ | None — just install CUDA PyTorch |
-| `latentsync` | ⚠️ very slow | ✅ | None (Colab notebook) |
-
-All three also have a GPU Colab notebook under `colab_gpu/`.
+| `latentsync` | ⚠️ very slow | ✅ | None — run on a GPU box (§4) |
 
 ---
 
@@ -80,7 +76,7 @@ Consequences that shaped this POC:
 - **MuseTalk (diffusion-class, single-step) DOES run on this CPU** — verified, see §3c. It's the
   best local quality. Only *speed* suffers on CPU (minutes vs. seconds).
 - **LatentSync (multi-step diffusion, 512²) is the one to keep on a GPU** — technically runnable on
-  CPU but impractically slow, and at fp32 it risks exceeding 13 GB RAM. It lives in the Colab notebook.
+  CPU but impractically slow, and at fp32 it risks exceeding 13 GB RAM. Run it on a GPU box (§4).
 - **GGUF / llama.cpp is not applicable to lip-sync models.** `llama.cpp`/GGUF only run transformer
   LLM graphs; the ComfyUI-GGUF project explicitly can't quantize the **UNet/conv2d** graphs used by
   LatentSync and MuseTalk. There are no GGUF lip-sync models and no runtime to load one.
@@ -280,34 +276,48 @@ Takeaway: **the realistic path does not strictly require a GPU.** MuseTalk gives
 result; the GPU only matters for *speed* (seconds vs. minutes) and for the heavier multi-step
 LatentSync.
 
-## 4. GPU Colab notebooks (`colab_gpu/`) — run any model at GPU speed
+## 4. Running on a GPU box over SSH (e.g. RTX 5090 / CUDA 13.2)
 
-Open any notebook in Google Colab, set **Runtime → Change runtime type → GPU**, and run top to
-bottom:
+On a real NVIDIA box the models run far faster and with fewer surprises. Setup + run scripts are
+provided; pick the **free GPU** with `CUDA_VISIBLE_DEVICES`.
 
-- **`colab_gpu/wav2lip_gpu_poc.ipynb`** — our ONNX Wav2Lip on GPU (`onnxruntime-gpu` auto-detected);
-  produces both the plain and GPEN-enhanced outputs.
-- **`colab_gpu/musetalk_gpu_poc.ipynb`** — MuseTalk on GPU (CUDA PyTorch); near real-time.
-- **`colab_gpu/latentsync_gpu_poc.ipynb`** — LatentSync 1.6 (highest quality). Clones the repo,
-  downloads the 1.6 checkpoints, runs on the bundled demo footage (or your own video/audio).
+> **Blackwell note (RTX 50-series):** the 5090 is `sm_120` and needs **PyTorch ≥2.7 built for
+> CUDA 12.8 (`cu128`)** — older torch has no kernels for it. The GPU setup scripts install `cu128`.
 
-Each notebook also reports, right after generation:
-- **`[TIME]`** — end-to-end wall-clock time on the Colab GPU (for speed comparison).
-- **Quality metrics** — `CSIM` (identity), `mouth_sharp`, `face_sharp` — using the *same*
-  definitions as the local `wav2lip/evaluate.py`, so numbers are directly comparable across all
-  three models.
+```bash
+git clone https://github.com/<you>/lipsync-poc.git && cd lipsync-poc
+nvidia-smi                     # find a free GPU (note its index)
 
-Note: LatentSync is **video → video** (mouth replacement on real footage). For photo-only inputs
-there's an optional "photo → static video" cell, but for true photo-to-talking-head prefer
-**Sonic** or **SadTalker**.
+# --- LatentSync (best fit for a big GPU; no mmcv) ---
+cd latentsync
+CUDA_VISIBLE_DEVICES=1 bash setup_gpu.sh
+CUDA_VISIBLE_DEVICES=1 bash run.sh        # -> ../outputs/latentsync_out.mp4
+
+# --- Wav2Lip (tiny; CPU is fine, or onnxruntime-gpu) ---
+cd ../ && python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt           # or: pip install onnxruntime-gpu (instead of onnxruntime) for CUDA
+python wav2lip/download_models.py
+python wav2lip/infer.py --face assets/sample_face.png --audio assets/sample_audio.wav --out outputs/wav2lip_demo.mp4
+
+# --- MuseTalk (GPU; mmcv on Blackwell may need a source build - see script warning) ---
+cd musetalk
+CUDA_VISIBLE_DEVICES=1 bash setup_gpu.sh  # if mmcv fails on Blackwell, use ./setup.sh (CPU) instead
+CUDA_VISIBLE_DEVICES=1 bash run.sh
+```
+
+Reliability on a fresh Blackwell box: **LatentSync = clean**, **Wav2Lip = clean**, **MuseTalk =
+possible but `mmcv` is finicky** (needs the CUDA toolkit to compile against `cu128` torch).
+
+LatentSync is **video → video**; for a photo, use the commented photo→static-video block in
+`latentsync/run.sh` (or prefer Sonic/SadTalker for photo→talking-head with head motion).
 
 ---
 
 ## 5. Suggested next steps
 
 **Finish the comparison**
-- Run all three `colab_gpu/` notebooks on a T4 and collect the `[TIME]` + `CSIM/mouth_sharp/
-  face_sharp` numbers into one table (GPU-speed vs. quality, apples-to-apples with the local runs).
+- Run all three on the GPU box (§4) and collect timing + `CSIM/mouth_sharp/face_sharp` into one
+  table (GPU-speed vs. quality, apples-to-apples with the local CPU runs).
 - Add **SyncNet LSE-C / LSE-D** (the one missing, industry-standard *lip-sync accuracy* metric;
   needs PyTorch + GPU) so ranking isn't based on sharpness/identity alone.
 
@@ -322,7 +332,7 @@ there's an optional "photo → static video" cell, but for true photo-to-talking
 - Lightweight / CPU-only / fast dubbing → **Wav2Lip (+GPEN)**.
 
 **Toward production**
-- Decide GPU hosting (Colab Pro / RunPod / Lambda) for the diffusion models.
+- Decide GPU hosting for the diffusion models (the shared SSH box / RunPod / Lambda).
 - Wrap the chosen model in a small batch/HTTP API; add queueing for multi-request use.
 - Speed up MuseTalk with **ONNX + INT8 / TensorRT / fp16** (see §2) if throughput matters.
 
@@ -335,6 +345,7 @@ lipsync-poc/
 │   ├── wav2lip_arch.md
 │   ├── musetalk_arch.md
 │   └── latentsync_arch.md
+├── latentsync/         GPU runner for LatentSync (setup_gpu.sh + run.sh; clone gitignored)
 ├── requirements.txt
 ├── assets/            sample_face.png, sample_audio.wav
 ├── models/            downloaded ONNX weights (gitignored)
@@ -348,13 +359,10 @@ lipsync-poc/
 │   ├── compare.py           one-command comparison across outputs
 │   ├── download_models.py
 │   └── make_sample_audio.py
-├── musetalk/            local MuseTalk (py3.10 venv + cloned repo)
-│   ├── setup.sh             one-time env + weights setup
-│   ├── run.sh               run inference -> outputs/musetalk_demo.mp4
-│   ├── .venv/               (gitignored)
-│   └── MuseTalk/            cloned repo + models (gitignored) + configs/inference/poc.yaml
-└── colab_gpu/          GPU Colab notebooks for all three models
-    ├── wav2lip_gpu_poc.ipynb
-    ├── musetalk_gpu_poc.ipynb
-    └── latentsync_gpu_poc.ipynb
+└── musetalk/            local MuseTalk (py3.10 venv + cloned repo)
+    ├── setup.sh             one-time CPU env + weights setup
+    ├── setup_gpu.sh         GPU env (cu128 torch; mmcv may need source build on Blackwell)
+    ├── run.sh               run inference -> outputs/musetalk_demo.mp4
+    ├── .venv/               (gitignored)
+    └── MuseTalk/            cloned repo + models (gitignored) + configs/inference/poc.yaml
 ```

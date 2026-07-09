@@ -1,14 +1,20 @@
 """ONNX Runtime execution-provider selection.
 
-Prefers CUDA (GPU) when available, otherwise falls back to CPU. This lets the
-same code run on a GPU box (with `onnxruntime-gpu` installed) or on a CPU-only
-machine like WSL2 without any changes.
+Auto-picks the best available accelerator, falling back to CPU:
+  * CUDA  (NVIDIA)         -> install `onnxruntime-gpu`
+  * DirectML (any DX12 GPU on Windows: AMD/Intel/NVIDIA) -> install `onnxruntime-directml`
+  * CPU                   -> plain `onnxruntime`
+The same code runs unchanged on a CUDA box, a Windows AMD/Intel GPU, or CPU-only.
 """
 import onnxruntime as ort
 
 
 def get_providers():
     available = ort.get_available_providers()
-    if "CUDAExecutionProvider" in available:
-        return ["CUDAExecutionProvider", "CPUExecutionProvider"]
-    return ["CPUExecutionProvider"]
+    order = []
+    if "CUDAExecutionProvider" in available:      # NVIDIA
+        order.append("CUDAExecutionProvider")
+    if "DmlExecutionProvider" in available:        # AMD/Intel/NVIDIA on Windows (DirectML)
+        order.append("DmlExecutionProvider")
+    order.append("CPUExecutionProvider")
+    return order

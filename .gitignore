@@ -10,7 +10,11 @@ models/
 outputs/*.mp4
 outputs/*.png
 
-# MuseTalk: keep only our setup.sh/run.sh. The MuseTalk/ folder is a full
+# MuseTalk: keep only our setup*.sh/run.sh. The MuseTalk/ folder is a full
 # third-party clone (has its own .git, GBs of weights) recreated by setup.sh.
 musetalk/.venv/
 musetalk/MuseTalk/
+
+# LatentSync: keep only our setup_gpu.sh/run.sh; the clone + venv are regenerated.
+latentsync/.venv/
+latentsync/LatentSync/
