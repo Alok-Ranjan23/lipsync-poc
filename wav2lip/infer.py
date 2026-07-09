@@ -184,7 +184,8 @@ def main():
     ]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    print(f"[4/5] running Wav2Lip on {n} frames (CPU)...")
+    dev = "GPU" if "CUDAExecutionProvider" in sess.get_providers() else "CPU"
+    print(f"[4/5] running Wav2Lip on {n} frames ({dev})...")
     for s in tqdm(range(0, n, args.batch)):
         e = min(n, s + args.batch)
         img_batch, mel_batch, meta = [], [], []

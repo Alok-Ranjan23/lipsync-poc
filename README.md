@@ -323,20 +323,38 @@ LatentSync is **video → video**; for a photo, use the commented photo→static
 
 ### Measured results (2× RTX 5090 box, ~6 s clip)
 
-Verified end-to-end on the SSH GPU box (the `[TIME]` each runner prints):
+Verified end-to-end on the SSH GPU box. Time is each runner's `[TIME]`; quality is from
+`wav2lip/evaluate.py` (CSIM = identity, mouth_sharp = mouth crispness). Quality depends on the
+**model + input, not the device** (CPU and GPU of the same model produce identical pixels).
 
-| Model | Input | Device | Time | Mouth res / quality |
-|---|---|---|---|---|
-| Wav2Lip | image | CPU | **2.4 s** | 96² — dated/soft |
-| MuseTalk 1.5 | image | GPU | 71 s | 256² — natural |
-| MuseTalk 1.5 | image | CPU | 116 s | 256² — natural |
-| LatentSync 1.6 | image (static) | GPU | 80 s | 512² — most realistic |
-| LatentSync 1.6 | video | GPU | 89 s | 512² + real head motion |
+| Model | Input | Device | Time | CSIM | mouth_sharp | Realism |
+|---|---|---|---|---|---|---|
+| Wav2Lip | image | CPU | 2.4 s | ~0.95 | ~7 | low (soft 96²) |
+| Wav2Lip | image | GPU | **1.7 s** | ~0.95 | ~7 | low (soft 96²) |
+| MuseTalk 1.5 | image | CPU | 116 s | ~0.92 | ~18 | good (256²) |
+| MuseTalk 1.5 | image | GPU | 71 s | ~0.92 | ~18 | good (256²) |
+| LatentSync 1.6 | image (static) | GPU | 80 s | ~0.90 | highest (512²) | high, frozen head |
+| LatentSync 1.6 | video | GPU | 89 s | ~0.90 | highest (512²) | **best (+ head motion)** |
+| LatentSync 1.6 | any | CPU | not run | — | — | multi-step diffusion → impractical |
 
-Notes: MuseTalk's UNet/VAE run on the GPU while dwpose runs on CPU (mmcv built CPU-ops-only to
-dodge the Blackwell CUDA host-compiler gate). Wav2Lip stays on CPU (onnxruntime-gpu lacks
-sm_120/cuDNN here, and the model is tiny anyway). LatentSync's ~67 s diffusion loop is fixed cost
-regardless of image vs. video input.
+Notes: MuseTalk's UNet/VAE run on GPU while dwpose runs on CPU (mmcv built CPU-ops-only to dodge
+the Blackwell CUDA host-compiler gate). Wav2Lip's GPU run works via `onnxruntime-gpu` but barely
+beats CPU (tiny model). LatentSync's ~67 s diffusion loop is fixed cost regardless of image/video.
+
+### Conclusion — which model to use
+
+No single winner; pick by the constraint you optimize:
+
+- 🏆 **Best quality / most human** → **LatentSync 1.6 on GPU with a real driving video**
+  (512², natural head motion + temporal coherence). Cost: slowest (~89 s) and **GPU-only**.
+- ⚖️ **Best all-rounder (recommended default)** → **MuseTalk 1.5**. Near-LatentSync realism (256²,
+  natural, seamless), and the **only realistic model that also runs on CPU** (71 s GPU / 116 s CPU).
+  Best realism-per-second that isn't GPU-locked.
+- ⚡ **Fastest / lightest** → **Wav2Lip** (1.7–2.4 s, trivial deps, runs anywhere) — but visibly
+  soft mouth (least human); use for quick previews or ultra-low-latency.
+
+For this POC's goal (**realistic, human-like**): use **LatentSync** when a GPU + source video are
+available; otherwise **MuseTalk** is the pragmatic pick. Reserve Wav2Lip for drafts.
 
 ---
 
