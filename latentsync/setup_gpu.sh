@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Set up LatentSync 1.6 to run on an NVIDIA GPU.
 #
+# Uses `uv` to get Python 3.11 (GPU boxes often ship only Python 3.13/3.14, which
+# lack stable wheels for onnx/numba/etc. and cause dependency whack-a-mole).
+#
 # Target box: 2x RTX 5090 (Blackwell, sm_120), driver CUDA 13.2.
 # Blackwell needs PyTorch >= 2.7 built for CUDA 12.8 (cu128); older torch has no
 # kernels for sm_120 and fails with "no kernel image is available".
@@ -13,29 +16,33 @@ cd "$(dirname "$0")"
 : "${CUDA_VISIBLE_DEVICES:=1}"; export CUDA_VISIBLE_DEVICES
 echo "==> using GPU(s): CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES"
 
-echo "==> [1/5] clone LatentSync"
+echo "==> [1/6] ensure uv + Python 3.11"
+command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+uv python install 3.11
+
+echo "==> [2/6] clone LatentSync"
 [ -d LatentSync ] || git clone https://github.com/bytedance/LatentSync.git
 cd LatentSync
 
-echo "==> [2/5] Python venv"
-python3 -m venv .venv
+echo "==> [3/6] Python 3.11 venv (via uv)"
+uv venv --python 3.11 .venv
 # shellcheck disable=SC1091
 . .venv/bin/activate
-pip install -U pip
 
-echo "==> [3/5] Blackwell-capable PyTorch (cu128). For an older GPU, change the cu index."
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+echo "==> [4/6] Blackwell-capable PyTorch (cu128). For an older GPU, change the cu index."
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 
 command -v ffmpeg >/dev/null || echo "!! ffmpeg not found - install it: sudo apt-get install -y ffmpeg libgl1"
 
-echo "==> [4/5] repo deps (strip their torch pins so cu128 torch stays; relax mediapipe)"
+echo "==> [5/6] repo deps (strip torch pins so cu128 torch stays; relax mediapipe) + known fixes"
 sed -i '/^torch/d; /^torchvision/d; /^torchaudio/d; s/mediapipe==[0-9.]*/mediapipe/' requirements.txt
-pip install -r requirements.txt
-# accelerate fixes the diffusers<->accelerate clash; keep huggingface_hub <1.0 so
-# transformers/tokenizers stay happy (hf_hub 1.x drops APIs they need).
-pip install -U accelerate "huggingface_hub>=0.24,<1.0"
+uv pip install -r requirements.txt
+# accelerate -> diffusers clash; huggingface_hub<1.0 for transformers/tokenizers;
+# ml_dtypes>=0.5 for the onnx pulled in by insightface; keep numpy<2 (numba/CV libs).
+uv pip install -U accelerate "huggingface_hub>=0.24,<1.0" "ml_dtypes>=0.5.0" "numpy<2"
 
-echo "==> [5/5] download LatentSync 1.6 checkpoints"
+echo "==> [6/6] download LatentSync 1.6 checkpoints"
 python - <<'PY'
 from huggingface_hub import snapshot_download
 snapshot_download('ByteDance/LatentSync-1.6', local_dir='checkpoints',
