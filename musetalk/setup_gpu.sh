@@ -33,7 +33,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 echo "==> [4/6] inference deps"
 pip install "numpy<2" diffusers==0.30.2 accelerate transformers==4.39.2 \
-  huggingface_hub librosa einops omegaconf ffmpeg-python moviepy soundfile \
+  "huggingface_hub<1.0" librosa einops omegaconf ffmpeg-python moviepy soundfile \
   opencv-python==4.9.0.80 requests imageio imageio-ffmpeg gdown
 
 echo "==> [5/6] mmlab (mmcv likely builds from source on Blackwell - needs nvcc/CUDA toolkit)"

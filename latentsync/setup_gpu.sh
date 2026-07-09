@@ -31,7 +31,9 @@ command -v ffmpeg >/dev/null || echo "!! ffmpeg not found - install it: sudo apt
 echo "==> [4/5] repo deps (strip their torch pins so cu128 torch stays; relax mediapipe)"
 sed -i '/^torch/d; /^torchvision/d; /^torchaudio/d; s/mediapipe==[0-9.]*/mediapipe/' requirements.txt
 pip install -r requirements.txt
-pip install -U accelerate huggingface_hub   # fixes the diffusers<->accelerate clash
+# accelerate fixes the diffusers<->accelerate clash; keep huggingface_hub <1.0 so
+# transformers/tokenizers stay happy (hf_hub 1.x drops APIs they need).
+pip install -U accelerate "huggingface_hub>=0.24,<1.0"
 
 echo "==> [5/5] download LatentSync 1.6 checkpoints"
 python - <<'PY'

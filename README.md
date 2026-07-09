@@ -64,7 +64,10 @@ head motion), that's **Sonic/SadTalker's** job instead.
 
 ---
 
-## 2. Hardware reality on this machine
+## 2. Hardware reality (local dev machine)
+
+The CPU baseline (§3, §3b, §3c) was built and measured on a **local laptop** with **no GPU**
+(WSL2). The GPU path is §4. This section explains why the local defaults are CPU-oriented.
 
 ```
 GPU: none        (/dev/dxg missing, no libcuda in WSL2)
