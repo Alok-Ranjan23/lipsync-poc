@@ -110,29 +110,31 @@ Runs on **CPU by default** (auto-detects and uses a GPU if `onnxruntime-gpu` is 
 Accepts a **face image or video** + **audio** and produces a lip-synced MP4. A still image is
 treated as a repeated frame, so a single photo works.
 
-### Setup
+### Setup — CPU or GPU (same code, `providers.py` auto-detects)
 
 ```bash
-cd lipsync-poc
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
-
-# fetch models into lipsync-poc/models  (wav2lip_gan.onnx + yunet.onnx + sface.onnx)
-python wav2lip/download_models.py
+cd lipsync-poc/wav2lip
+bash setup.sh                                # CPU  (onnxruntime)
+# --- or, on an NVIDIA box --- (GPU: onnxruntime-gpu + cuDNN)
+CUDA_VISIBLE_DEVICES=1 bash setup_gpu.sh
 ```
+Both create the repo-root `.venv` and fetch the ONNX weights (`wav2lip_gan.onnx`, `yunet.onnx`,
+`sface.onnx`). Note: Wav2Lip is tiny, so CPU is already only seconds; GPU gain is marginal (and
+`onnxruntime-gpu` may lack Blackwell/sm_120 kernels → falls back to CPU).
 
 ### Run
 
 ```bash
-. .venv/bin/activate
-python wav2lip/infer.py \
-  --face  assets/sample_face.png \
-  --audio assets/sample_audio.wav \
-  --out   outputs/wav2lip_demo.mp4
+cd lipsync-poc/wav2lip
+bash run.sh                                  # sample face+audio -> outputs/wav2lip_demo.mp4
+# your own inputs (+ optional GPEN enhancer as 4th arg):
+bash run.sh <face> <audio> outputs/out.mp4 gpen
 ```
+`run.sh` prints `[device] ONNX providers ...` and `[TIME] end-to-end`, and auto-adds the cuDNN lib
+path for the GPU install. (You can also call `python wav2lip/infer.py --face ... --audio ... --out ...`
+directly.)
 
-Output: `outputs/wav2lip_demo.mp4`. On this 16-core CPU, ~156 frames (6.3 s @ 25 fps) synthesized
-in ~13 s of model time.
+Output: `outputs/wav2lip_demo.mp4`. On a 16-core CPU, ~156 frames (6.3 s @ 25 fps) in ~13 s.
 
 ### Optional: sharpen the mouth with a face enhancer
 
@@ -358,7 +360,10 @@ lipsync-poc/
 ├── assets/            sample_face.png, sample_audio.wav
 ├── models/            downloaded ONNX weights (gitignored)
 ├── outputs/           generated videos
-├── wav2lip/            local Wav2Lip pipeline (ONNX; CPU/GPU auto)
+├── wav2lip/            Wav2Lip pipeline (ONNX; CPU/GPU auto)
+│   ├── setup.sh             CPU env + weights
+│   ├── setup_gpu.sh         GPU env (onnxruntime-gpu + cuDNN)
+│   ├── run.sh               run inference (handles cuDNN path) -> outputs/
 │   ├── audio.py
 │   ├── infer.py
 │   ├── providers.py         ONNX CPU/GPU provider auto-detect

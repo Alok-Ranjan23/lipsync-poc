@@ -11,12 +11,13 @@ Pipeline:
   pipe raw frames -> ffmpeg (H.264 encode + original-audio mux)
 
 Quality is the classic Wav2Lip 96x96 baseline (soft mouth); for more realistic
-output use MuseTalk (../musetalk) or the GPU Colab notebooks (../colab_gpu).
+output use MuseTalk (../musetalk) or LatentSync (../latentsync) on a GPU.
 """
 import argparse
 import os
 import subprocess
 import sys
+import time
 
 import cv2
 import imageio_ffmpeg
@@ -133,9 +134,11 @@ def main():
         print("    (loading GPEN face enhancer)")
         enhancer = GPENEnhancer()
 
+    _t0 = time.time()
     print("[1/5] loading models...")
     from providers import get_providers
     sess = ort.InferenceSession(args.model, providers=get_providers())
+    print("[device] ONNX providers in use:", sess.get_providers())
     in_mel, in_face = [i.name for i in sess.get_inputs()]
     out_name = sess.get_outputs()[0].name
     face_net = make_detector()
@@ -224,7 +227,7 @@ def main():
     err = proc.stderr.read().decode(errors="ignore")
     if proc.wait() != 0:
         raise RuntimeError(f"ffmpeg failed:\n{err}")
-    print(f"done -> {args.out}")
+    print(f"done -> {args.out}   [TIME] end-to-end: {time.time() - _t0:.1f}s")
 
 
 if __name__ == "__main__":

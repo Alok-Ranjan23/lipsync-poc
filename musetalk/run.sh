@@ -4,6 +4,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# New PyTorch (>=2.6) defaults torch.load to weights_only=True, which refuses to
+# unpickle MuseTalk/dwpose checkpoints (they contain numpy objects). These are the
+# official checkpoints, so flip the default back for the whole run.
+export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+
 # Call the venv's Python by absolute path (robust even if another venv is active).
 VENV_PY="$PWD/.venv/bin/python"
 [ -x "$VENV_PY" ] || { echo "!! venv missing - run setup.sh first"; exit 1; }
