@@ -20,8 +20,10 @@ uv venv --python 3.12 "$VENV"
 # shellcheck disable=SC1091
 . "$VENV/bin/activate"
 
-# deps WITHOUT the CPU onnxruntime (it would clash with onnxruntime-gpu)
-uv pip install opencv-python-headless numpy scipy librosa soundfile imageio-ffmpeg huggingface_hub tqdm
+# Use the pinned requirements.txt (avoids a bad numba/llvmlite resolution on 3.12),
+# then swap the CPU onnxruntime for the GPU build + cuDNN.
+uv pip install -r requirements.txt
+uv pip uninstall onnxruntime
 uv pip install onnxruntime-gpu nvidia-cudnn-cu12
 python wav2lip/download_models.py
 
