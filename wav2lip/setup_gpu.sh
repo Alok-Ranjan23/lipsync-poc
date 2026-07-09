@@ -11,17 +11,18 @@
 # Usage (from lipsync-poc/wav2lip):  CUDA_VISIBLE_DEVICES=1 bash setup_gpu.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."          # repo root (lipsync-poc)
+VENV="${WAV2LIP_VENV:-.venv-gpu}"   # default a separate venv so the CPU .venv is kept
 
 command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 uv python install 3.12
-uv venv --python 3.12 .venv
+uv venv --python 3.12 "$VENV"
 # shellcheck disable=SC1091
-. .venv/bin/activate
+. "$VENV/bin/activate"
 
 # deps WITHOUT the CPU onnxruntime (it would clash with onnxruntime-gpu)
 uv pip install opencv-python-headless numpy scipy librosa soundfile imageio-ffmpeg huggingface_hub tqdm
 uv pip install onnxruntime-gpu nvidia-cudnn-cu12
 python wav2lip/download_models.py
 
-echo "==> GPU setup complete. Run:  CUDA_VISIBLE_DEVICES=1 bash wav2lip/run.sh"
+echo "==> GPU setup complete (venv: $VENV). Run:  WAV2LIP_VENV=$VENV CUDA_VISIBLE_DEVICES=1 bash wav2lip/run.sh"

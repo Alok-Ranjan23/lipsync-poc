@@ -8,13 +8,14 @@
 # Usage (from lipsync-poc/wav2lip):  bash setup.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."          # repo root (lipsync-poc)
+VENV="${WAV2LIP_VENV:-.venv}"   # selectable so CPU + GPU can coexist
 
 command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 uv python install 3.12
-uv venv --python 3.12 .venv
+uv venv --python 3.12 "$VENV"
 # shellcheck disable=SC1091
-. .venv/bin/activate
+. "$VENV/bin/activate"
 
 uv pip install -r requirements.txt          # includes CPU onnxruntime
 python wav2lip/download_models.py

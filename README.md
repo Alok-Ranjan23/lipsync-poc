@@ -321,6 +321,23 @@ possible but `mmcv` is finicky** (needs the CUDA toolkit to compile against `cu1
 LatentSync is **video → video**; for a photo, use the commented photo→static-video block in
 `latentsync/run.sh` (or prefer Sonic/SadTalker for photo→talking-head with head motion).
 
+### Measured results (2× RTX 5090 box, ~6 s clip)
+
+Verified end-to-end on the SSH GPU box (the `[TIME]` each runner prints):
+
+| Model | Input | Device | Time | Mouth res / quality |
+|---|---|---|---|---|
+| Wav2Lip | image | CPU | **2.4 s** | 96² — dated/soft |
+| MuseTalk 1.5 | image | GPU | 71 s | 256² — natural |
+| MuseTalk 1.5 | image | CPU | 116 s | 256² — natural |
+| LatentSync 1.6 | image (static) | GPU | 80 s | 512² — most realistic |
+| LatentSync 1.6 | video | GPU | 89 s | 512² + real head motion |
+
+Notes: MuseTalk's UNet/VAE run on the GPU while dwpose runs on CPU (mmcv built CPU-ops-only to
+dodge the Blackwell CUDA host-compiler gate). Wav2Lip stays on CPU (onnxruntime-gpu lacks
+sm_120/cuDNN here, and the model is tiny anyway). LatentSync's ~67 s diffusion loop is fixed cost
+regardless of image vs. video input.
+
 ---
 
 ## 5. Suggested next steps

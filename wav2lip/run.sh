@@ -7,7 +7,10 @@
 #   CUDA_VISIBLE_DEVICES=1 bash run.sh            # pick a GPU (if GPU setup installed)
 set -euo pipefail
 cd "$(dirname "$0")/.."          # repo root
-PY=".venv/bin/python"
+# venv selectable so CPU (.venv) and GPU (.venv-gpu) can coexist:
+#   bash run.sh                          # .venv     (CPU, from setup.sh)
+#   WAV2LIP_VENV=.venv-gpu bash run.sh   # .venv-gpu (GPU, from setup_gpu.sh)
+PY="${WAV2LIP_VENV:-.venv}/bin/python"
 [ -x "$PY" ] || { echo "!! venv missing - run setup.sh (CPU) or setup_gpu.sh (GPU) first"; exit 1; }
 
 # If the cuDNN wheel is present (GPU setup), add it to the loader path so
