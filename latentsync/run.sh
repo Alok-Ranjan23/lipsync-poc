@@ -19,6 +19,16 @@ AUDIO="${2:-../../assets/sample_audio.wav}"   # our TTS demo clip
 OUT="${3:-../../outputs/latentsync_out.mp4}"
 mkdir -p ../../outputs
 
+# If a still image is passed as the "video", wrap it into a static video matched
+# to the audio length (LatentSync only accepts video). Head stays frozen; mouth moves.
+case "${VIDEO,,}" in
+  *.png|*.jpg|*.jpeg|*.bmp|*.webp)
+    echo "==> image input -> building static video (frozen head, mouth-only motion)"
+    ffmpeg -y -loglevel error -loop 1 -i "$VIDEO" -i "$AUDIO" -shortest \
+      -r 25 -vf scale=512:512 -pix_fmt yuv420p -c:v libx264 _static_from_image.mp4
+    VIDEO=_static_from_image.mp4 ;;
+esac
+
 # --- photo -> static video (uncomment to drive from lipsync-poc/assets/sample_face.png) ---
 # DUR=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 ../../assets/sample_audio.wav)
 # ffmpeg -y -loop 1 -i ../../assets/sample_face.png -t "$DUR" -r 25 -vf scale=512:512 -pix_fmt yuv420p static_face.mp4
