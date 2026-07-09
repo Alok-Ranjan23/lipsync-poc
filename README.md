@@ -231,14 +231,19 @@ mmlab stack (this is a heavier, PyTorch pipeline, not ONNX).
 ```bash
 # Prereq: uv  ->  curl -LsSf https://astral.sh/uv/install.sh | sh
 cd lipsync-poc/musetalk
-bash setup.sh          # creates venv, installs deps, clones repo, downloads ~4 GB of weights
+bash setup.sh          # CPU env  (Python 3.10 + CPU torch + mmlab, ~4 GB weights)
+# --- or, on an NVIDIA box (GPU) --- (see §4; mmcv needs the CUDA toolkit on Blackwell)
+CUDA_VISIBLE_DEVICES=1 bash setup_gpu.sh
 ```
+
+Both `setup.sh` (CPU) and `setup_gpu.sh` (GPU) create the venv at `musetalk/.venv`, so the **same
+`run.sh` works for either** — it prints `[device] CPU` or `[device] CUDA - <gpu>` at the start.
 
 ### Run
 
 ```bash
 cd lipsync-poc/musetalk
-bash run.sh            # writes lipsync-poc/outputs/musetalk_demo.mp4
+bash run.sh            # writes lipsync-poc/outputs/musetalk_demo.mp4  (+ [TIME] and [device])
 ```
 
 `run.sh` handles ffmpeg (bundled) and the known harmless `save_dir_full` error the repo throws
