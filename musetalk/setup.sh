@@ -9,10 +9,18 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-echo "==> [1/6] Python 3.10 venv"
-uv venv --python 3.10 .venv
+# venv name is selectable so CPU + GPU can coexist (GPU uses .venv via setup_gpu.sh):
+#   bash setup.sh                          -> .venv       (default)
+#   MUSETALK_VENV=.venv-cpu bash setup.sh  -> .venv-cpu   (keep the GPU .venv intact)
+VENV="${MUSETALK_VENV:-.venv}"
+
+echo "==> [1/6] Python 3.10 venv ($VENV)"
+command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+uv python install 3.10
+uv venv --python 3.10 "$VENV"
 # shellcheck disable=SC1091
-. .venv/bin/activate
+. "$VENV/bin/activate"
 
 echo "==> [2/6] clone MuseTalk"
 [ -d MuseTalk ] || git clone https://github.com/TMElyralab/MuseTalk.git

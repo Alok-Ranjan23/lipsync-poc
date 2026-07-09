@@ -9,9 +9,12 @@ cd "$(dirname "$0")"
 # official checkpoints, so flip the default back for the whole run.
 export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 
-# Call the venv's Python by absolute path (robust even if another venv is active).
-VENV_PY="$PWD/.venv/bin/python"
-[ -x "$VENV_PY" ] || { echo "!! venv missing - run setup.sh first"; exit 1; }
+# venv is selectable so CPU (.venv-cpu) and GPU (.venv) can coexist:
+#   bash run.sh                         # uses .venv     (GPU, from setup_gpu.sh)
+#   MUSETALK_VENV=.venv-cpu bash run.sh # uses .venv-cpu (CPU, from setup.sh)
+VENV="${MUSETALK_VENV:-.venv}"
+VENV_PY="$PWD/$VENV/bin/python"
+[ -x "$VENV_PY" ] || { echo "!! venv '$VENV' missing - run setup.sh (CPU) or setup_gpu.sh (GPU) first"; exit 1; }
 cd MuseTalk
 
 # Make ffmpeg available via the bundled imageio-ffmpeg binary (no system install needed).
