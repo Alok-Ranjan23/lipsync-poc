@@ -14,8 +14,8 @@ cd "$(dirname "$0")/.."          # repo root (lipsync-poc)
 
 command -v uv >/dev/null || curl -LsSf https://astral.sh/uv/install.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
-uv python install 3.11
-uv venv --python 3.11 .venv
+uv python install 3.12
+uv venv --python 3.12 .venv
 # shellcheck disable=SC1091
 . .venv/bin/activate
 
