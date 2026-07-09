@@ -25,9 +25,11 @@ mkdir -p ../../outputs
 # VIDEO=static_face.mp4
 
 echo "==> LatentSync: video=$VIDEO audio=$AUDIO -> $OUT  (GPU $CUDA_VISIBLE_DEVICES)"
+python -c "import torch; print('[device]', 'CUDA' if torch.cuda.is_available() else 'CPU', '-', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no gpu')"
+_start=$(date +%s)
 python -m scripts.inference \
   --unet_config_path configs/unet/stage2_512.yaml \
   --inference_ckpt_path checkpoints/latentsync_unet.pt \
   --inference_steps 20 --guidance_scale 1.5 \
   --video_path "$VIDEO" --audio_path "$AUDIO" --video_out_path "$OUT"
-echo "==> done -> $OUT"
+echo "==> done -> $OUT   [TIME] end-to-end: $(( $(date +%s) - _start ))s"
