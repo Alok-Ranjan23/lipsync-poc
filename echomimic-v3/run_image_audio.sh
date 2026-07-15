@@ -16,6 +16,8 @@ esac
 
 : "${CUDA_VISIBLE_DEVICES:=1}"
 export CUDA_VISIBLE_DEVICES
+: "${PYTORCH_CUDA_ALLOC_CONF:=expandable_segments:True}"
+export PYTORCH_CUDA_ALLOC_CONF
 
 IMAGE="$1"
 AUDIO="$2"

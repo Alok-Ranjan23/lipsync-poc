@@ -17,6 +17,9 @@ TORCHVISION_VERSION=0.22.1
 TORCHAUDIO_VERSION=2.7.1
 NUMPY_VERSION=1.26.4
 OPENCV_VERSION=4.9.0.80
+DIFFUSERS_VERSION=0.32.2
+TRANSFORMERS_VERSION=4.48.0
+ACCELERATE_VERSION=0.26.1
 WAN_MODEL=Wan2.1-Fun-V1.1-1.3B-InP
 FLASH_MODEL=echomimicv3-flash-pro
 
@@ -43,6 +46,10 @@ uv pip install --reinstall \
 
 cd EchoMimicV3
 uv pip install -r requirements.txt pyloudnorm
+uv pip install --reinstall \
+  "diffusers==$DIFFUSERS_VERSION" \
+  "transformers==$TRANSFORMERS_VERSION" \
+  "accelerate==$ACCELERATE_VERSION"
 uv pip install --reinstall \
   "torch==$TORCH_VERSION" \
   "torchvision==$TORCHVISION_VERSION" \

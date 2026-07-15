@@ -24,12 +24,24 @@ and EchoMimicV3 Flash weights into the gitignored `weights/` directory.
 
 ```bash
 CUDA_VISIBLE_DEVICES=1 bash run_image_audio.sh \
-  ../assets/sample_face.png \
-  ../assets/latentsync/demo2_audio.wav \
-  ../outputs/echomimic_v3_sample_face_demo2_audio.mp4
+  assets/demo1_first_frame.png \
+  assets/demo1_audio.wav \
+  ../outputs/echomimic_v3_demo1.mp4
 ```
 
 The runner reports end-to-end time and writes an MP4 with an audio track.
+
+## Public fixtures
+
+Three public image/audio fixture pairs are available under `assets/`:
+
+```text
+demo1_first_frame.png + demo1_audio.wav
+demo2_first_frame.png + demo2_audio.wav
+demo3_first_frame.png + demo3_audio.wav
+```
+
+See [`assets/README.md`](assets/README.md) for provenance and test-only usage.
 
 ## License and scope
 
