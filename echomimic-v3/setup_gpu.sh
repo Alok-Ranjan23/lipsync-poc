@@ -11,6 +11,10 @@ esac
 
 : "${CUDA_VISIBLE_DEVICES:=1}"
 export CUDA_VISIBLE_DEVICES
+: "${UV_HTTP_TIMEOUT:=300}"
+: "${UV_HTTP_RETRIES:=5}"
+export UV_HTTP_TIMEOUT
+export UV_HTTP_RETRIES
 
 TORCH_VERSION=2.7.1
 TORCHVISION_VERSION=0.22.1
@@ -59,8 +63,8 @@ uv pip install modelscope
 uv pip install --reinstall "numpy==$NUMPY_VERSION" "opencv-python==$OPENCV_VERSION"
 
 mkdir -p ../weights
-python -c "from huggingface_hub import snapshot_download; snapshot_download('alibaba-pai/Wan2.1-Fun-V1.1-1.3B-InP', local_dir='../weights/$WAN_MODEL'); snapshot_download('BadToBest/EchoMimicV3', local_dir='../weights/EchoMimicV3', allow_patterns=['$FLASH_MODEL/*']); print('Hugging Face weights ready')"
+python ../download_models.py
 modelscope download --model TencentGameMate/chinese-wav2vec2-base --local_dir ../weights/chinese-wav2vec2-base
 
-python -c "import cv2, numpy, torch, torchvision; assert numpy.__version__ == '$NUMPY_VERSION', numpy.__version__; assert torch.cuda.is_available(), 'CUDA unavailable'; print('torch', torch.__version__, '| torchvision', torchvision.__version__, '| numpy', numpy.__version__, '| opencv', cv2.__version__, '| cuda', torch.version.cuda, '| gpu', torch.cuda.get_device_name(0))"
+python ../verify_env.py
 echo "==> done. Run: CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES bash run_image_audio.sh <image> <audio> <output.mp4>"
