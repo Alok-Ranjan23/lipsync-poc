@@ -337,6 +337,21 @@ Verified end-to-end on the SSH GPU box. Time is each runner's `[TIME]`; quality 
 | LatentSync 1.6 | video | GPU | 89 s | ~0.90 | highest (512²) | **best (+ head motion)** |
 | LatentSync 1.6 | any | CPU | not run | — | — | multi-step diffusion → impractical |
 
+### LatentSync output demos (GPU 1)
+
+The output duration is measured from the generated MP4. Inference time is the
+runner's `[TIME] end-to-end` value; it must be captured during each remote run.
+
+| Output | Input | Output duration | Inference time |
+|---|---|---:|---:|
+| `sample_outputs/latentsync_demo1.mp4` | `demo1_video.mp4` + `demo1_audio.wav` | 9.68 s | 262 s |
+| `sample_outputs/latentsync_demo2.mp4` | `demo2_video.mp4` + `demo2_audio.wav` | 19.92 s | 507 s |
+| `sample_outputs/latentsync_demo3.mp4` | `demo3_video.mp4` + `demo3_audio.wav` | 18.64 s | 473 s |
+| `sample_outputs/latentsync_my_image_demo2_audio.mp4` | `sample_face.png` + `demo2_audio.wav` | 19.92 s | 469 s (7 m 51.8 s shell time) |
+
+The image-input output uses a static 512×512 source frame, so its head and
+background remain static while the mouth is animated.
+
 Notes: MuseTalk's UNet/VAE run on GPU while dwpose runs on CPU (mmcv built CPU-ops-only to dodge
 the Blackwell CUDA host-compiler gate). Wav2Lip's GPU run works via `onnxruntime-gpu` but barely
 beats CPU (tiny model). LatentSync's ~67 s diffusion loop is fixed cost regardless of image/video.
