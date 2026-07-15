@@ -18,3 +18,8 @@ musetalk/MuseTalk/
 # LatentSync: keep only our setup_gpu.sh/run.sh; the clone + venv are regenerated.
 latentsync/.venv/
 latentsync/LatentSync/
+
+# EchoMimicV3: keep only our setup_gpu.sh/run_image_audio.sh and docs.
+echomimic-v3/.venv/
+echomimic-v3/EchoMimicV3/
+echomimic-v3/weights/

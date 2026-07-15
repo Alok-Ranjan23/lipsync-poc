@@ -3,7 +3,7 @@
 Research + working proof-of-concept for open-source lip-sync, with a focus on
 **realistic, human-like** rendering (not cartoon).
 
-Three runnable paths:
+Four runnable paths:
 
 1. **`wav2lip/`** — a self-contained pipeline (ONNX Runtime, no PyTorch) that runs on this
    machine today. Proves the end-to-end plumbing. Quality is the classic Wav2Lip baseline (soft
@@ -16,6 +16,8 @@ Three runnable paths:
    real-time). See §3c.
 3. **`latentsync/`** — GPU runner for **LatentSync 1.6**, the highest-quality diffusion model
    (multi-step, needs a real NVIDIA GPU). Run it on an SSH GPU box — see **§4**.
+4. **`echomimic-v3/`** — EchoMimicV3 Flash direct image + audio → video POC. This is a
+   separate Python/CUDA stack; it does not produce a reusable 3D avatar or ARKit coefficients.
 
 To run any of these on a GPU box over SSH (setup + run scripts), see **§4**.
 
@@ -26,6 +28,7 @@ To run any of these on a GPU box over SSH (setup + run scripts), see **§4**.
 | `wav2lip` | ✅ | ✅ | None — auto-detects; just add `onnxruntime-gpu` |
 | `musetalk` | ✅ | ✅ | None — just install CUDA PyTorch |
 | `latentsync` | ⚠️ very slow | ✅ | None — run on a GPU box (§4) |
+| `echomimic-v3` | ❌ | ✅ | Separate GPU-only Flash environment |
 
 ---
 
@@ -33,14 +36,16 @@ To run any of these on a GPU box over SSH (setup + run scripts), see **§4**.
 
 | Model | Repo | Approach | Realism | Speed | VRAM | License |
 |---|---|---|---|---|---|---|
-| **LatentSync 1.6** ⭐ | [`bytedance/LatentSync`](https://github.com/bytedance/LatentSync) | Audio-conditioned latent diffusion (Stable Diffusion) | **Best** — sharp textures, real teeth, strong identity | Slow (~0.1× realtime) | ~18–20 GB @ 512² | Apache-2.0 ✅ |
-| **MuseTalk 1.5** | [`TMElyralab/MuseTalk`](https://github.com/TMElyralab/MuseTalk) | Latent-space inpainting of mouth | High; slight jitter | **Real-time** (30fps+ on V100) | ~8–12 GB | research |
+| **LatentSync 1.6** ⭐ | [`bytedance/LatentSync`](https://github.com/bytedance/LatentSync) | Audio-conditioned latent diffusion (Stable Diffusion) | **Best** — sharp textures, real teeth, strong identity | Slow (~0.1× realtime) | ~18–20 GB @ 512² | Code Apache-2.0; weights OpenRAIL++ |
+| **EchoMimicV3 Flash** | [`antgroup/echomimic_v3`](https://github.com/antgroup/echomimic_v3) | Image + audio → direct talking video | POC pending | 8-step Flash generation | ~12 GB claimed | Apache-2.0 model claim; review Wan2.1/Wav2Vec2 deps |
+| **MuseTalk 1.5** | [`TMElyralab/MuseTalk`](https://github.com/TMElyralab/MuseTalk) | Latent-space inpainting of mouth | High; slight jitter | **Real-time** (30fps+ on V100) | ~8–12 GB | MIT code/model claim; dependency review |
 | **Sonic** (CVPR'25) | [`jixiaozhong/Sonic`](https://github.com/jixiaozhong/sonic) | SVD, single **still image** → talking head | Very natural head motion | Slow | ~32 GB | research |
 | **SadTalker** | [`OpenTalker/SadTalker`](https://github.com/OpenTalker/SadTalker) | Photo + audio → head motion | Moderate | Variable | ~12 GB | check |
 | **Wav2Lip** | [`Rudrabha/Wav2Lip`](https://github.com/Rudrabha/Wav2Lip) | GAN, 96×96 mouth patch | Dated, blurry mouth | ~1× realtime; **CPU-capable via ONNX** | ~8 GB (GPU) / CPU | non-commercial weights |
 
-**Recommendation for "human-like":** **LatentSync 1.6** — the 2026 consensus best local model for
-realistic lip replacement on real footage; Apache-2.0 (commercially safe); actively maintained.
+**Recommendation for "human-like":** **LatentSync 1.6** — the best verified local result for
+realistic lip replacement on real footage. Its OpenRAIL++ checkpoint and dependencies require
+commercial review. EchoMimicV3 Flash is the direct image + audio candidate under evaluation.
 
 - Existing **video** + new audio → **LatentSync** (or MuseTalk for speed).
 - Single **photo** + audio → **Sonic** / **SadTalker**.
@@ -56,6 +61,7 @@ convincingly "a person talking."
 | Wav2Lip | image or video | either | mouth-only patch |
 | MuseTalk | image or video | **video** | inpaints mouth; video adds real head motion |
 | LatentSync | video (photo via static-video) | **video** | diffusion mouth replacement on real footage |
+| EchoMimicV3 Flash | image + audio | image | generates a direct 2D talking video; POC pending |
 | Sonic / SadTalker | single image | image | generates head motion from a photo |
 
 **Bottom line:** it's not that these *need* video — it's that they **reuse** the real motion in a
