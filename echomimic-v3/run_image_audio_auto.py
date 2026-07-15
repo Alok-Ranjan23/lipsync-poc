@@ -3,6 +3,7 @@ import math
 import os
 import shutil
 import subprocess
+import wave
 from pathlib import Path
 
 RUNNER_ROOT = Path(__file__).resolve().parent
@@ -44,25 +45,31 @@ if not args.image.is_file():
 if not args.audio.is_file():
     raise FileNotFoundError(f"Audio not found: {args.audio}")
 
-if shutil.which("ffprobe") is None:
-    raise RuntimeError("ffprobe is required to inspect audio duration")
+if shutil.which("ffprobe") is not None:
+    probe = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(args.audio),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    duration = float(probe.stdout.strip())
+elif args.audio.suffix.lower() == ".wav":
+    with wave.open(str(args.audio), "rb") as wav:
+        duration = wav.getnframes() / wav.getframerate()
+else:
+    raise RuntimeError(
+        "ffprobe is required for non-WAV audio. Install FFmpeg or provide a WAV file."
+    )
 
-probe = subprocess.run(
-    [
-        "ffprobe",
-        "-v",
-        "error",
-        "-show_entries",
-        "format=duration",
-        "-of",
-        "default=noprint_wrappers=1:nokey=1",
-        str(args.audio),
-    ],
-    check=True,
-    capture_output=True,
-    text=True,
-)
-duration = float(probe.stdout.strip())
 frames = int(math.ceil(duration * FPS))
 
 mode = args.mode
