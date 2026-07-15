@@ -50,6 +50,7 @@ uv pip install --reinstall \
 
 cd EchoMimicV3
 uv pip install -r requirements.txt pyloudnorm
+python ../patch_echomimic.py
 uv pip install --reinstall \
   "diffusers==$DIFFUSERS_VERSION" \
   "transformers==$TRANSFORMERS_VERSION" \

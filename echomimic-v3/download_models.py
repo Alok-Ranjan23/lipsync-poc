@@ -12,7 +12,14 @@ snapshot_download(
 snapshot_download(
     "BadToBest/EchoMimicV3",
     local_dir=WEIGHTS / "EchoMimicV3",
-    allow_patterns=["echomimicv3-flash-pro/*"],
+    allow_patterns=[
+        "echomimicv3-flash-pro/*",
+        "transformer/*",
+    ],
+)
+snapshot_download(
+    "facebook/wav2vec2-base-960h",
+    local_dir=WEIGHTS / "wav2vec2-base-960h",
 )
 
 print("Hugging Face weights ready")

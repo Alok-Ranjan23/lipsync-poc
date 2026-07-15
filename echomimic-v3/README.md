@@ -31,6 +31,45 @@ CUDA_VISIBLE_DEVICES=1 bash run_image_audio.sh \
 
 The runner reports end-to-end time and writes an MP4 with an audio track.
 
+## Automatic short/long selection
+
+Use one entry point for either output length:
+
+```bash
+CUDA_VISIBLE_DEVICES=1 bash run_image_audio_auto.sh \
+  --mode auto \
+  assets/demo2_first_frame.png \
+  assets/demo2_audio.wav \
+  ../outputs/echomimic_v3_demo2.mp4
+```
+
+`auto` reads the input audio duration at 25 FPS:
+
+- 81 frames or fewer: EchoMimicV3 Flash, one 8-step clip.
+- More than 81 frames: EchoMimicV3 Preview, chunked long-video inference.
+
+Override the choice with `--mode short` or `--mode long`. Flash is faster but
+needs a larger direct GPU allocation. Preview uses memory offloading and is
+slower, but supports long audio.
+
+## Long audio inference
+
+`run_image_audio.sh` uses the Flash model and produces a short 81-frame clip
+(about 3.2 seconds at 25 FPS). For audio longer than 138 frames, use the
+Preview model's Long Video CFG path:
+
+```bash
+CUDA_VISIBLE_DEVICES=1 bash run_image_audio_long.sh \
+  assets/demo2_first_frame.png \
+  assets/demo2_audio.wav \
+  ../outputs/echomimic_v3_demo2_long.mp4
+```
+
+The long runner uses EchoMimicV3's `app_mm.py` memory-managed path. It processes
+the audio in 81-frame chunks with 8-frame overlap and uses `mmgp` offloading
+with a 75% GPU-memory budget by default. It needs the Preview model weights and
+standard `wav2vec2-base-960h`, both downloaded by `setup_gpu.sh`.
+
 ## Public fixtures
 
 Three public image/audio fixture pairs are available under `assets/`:
