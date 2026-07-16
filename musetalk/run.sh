@@ -15,6 +15,15 @@ export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 VENV="${MUSETALK_VENV:-.venv}"
 VENV_PY="$PWD/$VENV/bin/python"
 [ -x "$VENV_PY" ] || { echo "!! venv '$VENV' missing - run setup.sh (CPU) or setup_gpu.sh (GPU) first"; exit 1; }
+CONFIG="${MUSETALK_CONFIG:-configs/inference/poc.yaml}"
+case "$CONFIG" in
+  /*) ;;
+  *) CONFIG="$PWD/$CONFIG" ;;
+esac
+if [ ! -f "$CONFIG" ]; then
+  echo "!! inference config not found: $CONFIG" >&2
+  exit 1
+fi
 cd MuseTalk
 
 # Make ffmpeg available via the bundled imageio-ffmpeg binary (no system install needed).
@@ -23,7 +32,11 @@ mkdir -p .ffbin && ln -sf "$FF" .ffbin/ffmpeg
 export PATH="$PWD/.ffbin:$PATH"
 export FFMPEG_PATH="$PWD/.ffbin"
 
-OUT="results/poc/v15/poc_face_poc_audio.mp4"
+OUT="${MUSETALK_OUTPUT:-results/poc/v15/poc_face_poc_audio.mp4}"
+case "$OUT" in
+  /*) ;;
+  *) OUT="$PWD/$OUT" ;;
+esac
 rm -f "$OUT"   # avoid reporting a stale previous result as success
 
 # Report device (works for both the CPU and GPU venvs; GPU is used automatically
@@ -35,7 +48,7 @@ echo "==> running MuseTalk (CPU: ~1-15 min depending on the machine; near real-t
 # still-image input, so we don't abort on it.
 _start=$(date +%s)
 "$VENV_PY" -m scripts.inference \
-  --inference_config configs/inference/poc.yaml \
+  --inference_config "$CONFIG" \
   --result_dir results/poc \
   --unet_model_path models/musetalkV15/unet.pth \
   --unet_config  models/musetalkV15/musetalk.json \

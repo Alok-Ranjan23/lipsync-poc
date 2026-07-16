@@ -1,9 +1,9 @@
 # Open-Source Lip-Sync POC
 
-Research + working proof-of-concept for open-source lip-sync, with a focus on
-**realistic, human-like** rendering (not cartoon).
+Research + working proof-of-concept for open-source lip-sync and avatar
+creation, with a focus on **realistic, human-like** rendering (not cartoon).
 
-Four runnable paths:
+Five runnable paths:
 
 1. **`wav2lip/`** — a self-contained pipeline (ONNX Runtime, no PyTorch) that runs on this
    machine today. Proves the end-to-end plumbing. Quality is the classic Wav2Lip baseline (soft
@@ -18,6 +18,8 @@ Four runnable paths:
    (multi-step, needs a real NVIDIA GPU). Run it on an SSH GPU box — see **§4**.
 4. **`echomimic-v3/`** — EchoMimicV3 Flash direct image + audio → video POC. This is a
    separate Python/CUDA stack; it does not produce a reusable 3D avatar or ARKit coefficients.
+5. **`lam-avatar/`** — official LAM one-photo → animatable Gaussian-head avatar POC. It
+   exports a LAM ZIP asset for the companion LAM WebGL renderer and LAM-A2E expression stream.
 
 To run any of these on a GPU box over SSH (setup + run scripts), see **§4**.
 
@@ -29,6 +31,7 @@ To run any of these on a GPU box over SSH (setup + run scripts), see **§4**.
 | `musetalk` | ✅ | ✅ | None — just install CUDA PyTorch |
 | `latentsync` | ⚠️ very slow | ✅ | None — run on a GPU box (§4) |
 | `echomimic-v3` | ❌ | ✅ | Separate GPU-only Flash environment |
+| `lam-avatar` | ❌ | ✅ | Separate CUDA/PyTorch avatar-generation environment |
 
 ---
 

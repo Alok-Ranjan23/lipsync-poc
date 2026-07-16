@@ -31,6 +31,18 @@ CUDA_VISIBLE_DEVICES=1 bash run_image_audio.sh \
 
 The runner reports end-to-end time and writes an MP4 with an audio track.
 
+## Timing results
+
+| Path | Input | Output duration | Measured end-to-end inference time |
+|---|---|---:|---:|
+| Flash | `sample_face.png` + `demo2_audio.wav` | 3.24 s (81 frames at 25 FPS) | Not retained from the successful remote run |
+| Preview long-video | `demo2_first_frame.png` + `demo2_audio.wav` | No completed output | Not measured; shared-GPU runs stalled or exhausted available VRAM |
+
+The Flash sample output is available as
+`sample_outputs/echomimic_v3_sample_face_demo2_audio.mp4`. A valid inference
+benchmark still needs one clean run on an exclusive GPU. Record the runner's
+`[TIME] end-to-end: ...s` line and report it separately from output duration.
+
 ## Automatic short/long selection
 
 Use one entry point for either output length:
